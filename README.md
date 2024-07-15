@@ -1,9 +1,7 @@
 # epimetheus
 
 ![GitHub last commit](https://img.shields.io/github/last-commit/danwiseman/epimetheus)
-
-<script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script><script type='text/javascript'>kofiwidget2.init('Support Me on Ko-fi', '#29abe0', 'V7V110K9YZ');kofiwidget2.draw();</script> 
-
+<a href='https://ko-fi.com/V7V110K9YZ' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi1.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
 A full-featured assistant that integrates with Slack, local Intranet, and other services.
 
