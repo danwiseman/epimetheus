@@ -47,9 +47,12 @@ def send_gpt_response(event: Event, say):
             response["messages"][0]["text"].replace("<@.*?>", "")
         )
 
+        print(f"received '{response['messages'][0]['text']}'")
+
         prompts = get_valid_messages(response["messages"])
 
         print(f"Using model {model}")
+        print(f"Prompts: {prompts}")
 
         ai_response = get_response(prompts, model)
 
