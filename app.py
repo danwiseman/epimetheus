@@ -23,12 +23,9 @@ from langchain_community.chat_models import ChatOllama
 from langchain_community.chat_message_histories import RedisChatMessageHistory
 
 from slack_bolt import App
+from slack_bolt.adapter.socket_mode import SocketModeHandler
 
-# SlackRequestHandler translates WSGI requests to Bolt's interface
-# and builds WSGI response from Bolt's response.
-from slack_bolt.adapter.flask import SlackRequestHandler
-
-from slack.chat import send_gpt_response, Event
+from slack_extension.chat import send_gpt_response, Event
 
 flask_app = Flask(__name__)
 bootstrap = Bootstrap5(flask_app)
@@ -38,7 +35,6 @@ slack_app = App(
     signing_secret=os.environ.get("SLACK_SIGNING_SECRET"),
     token=os.environ.get("SLACK_BOT_TOKEN"),
 )
-handler = SlackRequestHandler(slack_app)
 
 system_prompt = "TODO: Add system prompt here"
 
@@ -75,13 +71,6 @@ def chat():
         chat_session = request.json.get("chat_session")
         add_message_to_chat_history(chat_session, HumanMessage(content))
         return jsonify(success=True)
-
-
-# Register routes to Flask flask_app
-@flask_app.route("/slack/events", methods=["POST"])
-def slack_events():
-    # handler runs App's dispatch method
-    return handler.handle(request)
 
 
 @flask_app.route("/stream", methods=["GET"])
@@ -209,15 +198,17 @@ def get_recent_chats():
 ##########
 
 
-@slack_app.event("message")
-async def handle_message(body, say):
+@slack_app.event("app_mention")
+def handle_message(body, say):
     event = Event(
         channel=body["event"]["channel"],
         ts=body["event"]["ts"],
         thread_ts=body["event"].get("thread_ts"),
     )
-    await send_gpt_response(event, say)
+    send_gpt_response(event, say)
 
 
 if __name__ == "__main__":
+    handler = SocketModeHandler(slack_app, os.environ["SLACK_APP_TOKEN"])
+    handler.start()
     flask_app.run(debug=True)
