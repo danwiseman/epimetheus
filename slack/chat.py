@@ -31,16 +31,6 @@ async def post_image_message():
     pass
 
 
-@app.event("message")  # Listens to all messages in the Slack app
-async def handle_message(body, say):
-    event = Event(
-        channel=body["event"]["channel"],
-        ts=body["event"]["ts"],
-        thread_ts=body["event"].get("thread_ts"),
-    )
-    await send_gpt_response(event, say)
-
-
 async def send_gpt_response(event: Event, say):
     channel = event.channel
     ts = event.ts
