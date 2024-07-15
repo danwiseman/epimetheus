@@ -11,5 +11,5 @@ A full-featured assistant that integrates with Slack, local Intranet, and other 
     <img height="32" width="32" src="https://cdn.simpleicons.org/langchain" />
 </p>
 
-![epimetheus](assets/epimetheus-avatar.jpg)    
+<img height="100" width="100" src="static/assets/images/epimetheus-avatar.jpg" />
 
