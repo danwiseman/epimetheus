@@ -12,6 +12,7 @@ import redis
 import uuid
 import time
 import os
+import threading
 
 
 from PIL import Image, ImageColor
@@ -208,7 +209,23 @@ def handle_message(body, say):
     send_gpt_response(event, say)
 
 
-if __name__ == "__main__":
+def runFlask():
+    flask_app.run(debug=True, use_reloader=False)
+
+
+def runSlack():
     handler = SocketModeHandler(slack_app, os.environ["SLACK_APP_TOKEN"])
     handler.start()
-    flask_app.run(debug=True)
+
+
+if __name__ == "__main__":
+    handler = SocketModeHandler(slack_app, os.environ["SLACK_APP_TOKEN"])
+
+    flask_thread = threading.Thread(target=runFlask)
+    slack_thread = threading.Thread(target=runSlack)
+
+    flask_thread.start()
+    slack_thread.start()
+
+    flask_thread.join()
+    slack_thread.join()
