@@ -5,7 +5,11 @@ import pathlib
 from slack_bolt import App
 import re
 
-from ai import get_messages_from_slack_messages, get_response_from_model, prompt_models
+from slack.ai import (
+    get_messages_from_slack_messages,
+    get_response_from_model,
+    prompt_models,
+)
 
 app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
 
@@ -63,7 +67,7 @@ async def send_gpt_response(event: Event, say):
         if not ai_response:
             raise Exception("No response")
 
-        if model == prompt_models.IMAGE:
+        if model == prompt_models["IMAGE"]:
             stream, filename = await url_to_read_stream(ai_response.content)
             app.client.files_upload_v2(
                 file=stream, filename=filename, thread_ts=ts, channel_id=channel

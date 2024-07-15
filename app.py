@@ -11,6 +11,7 @@ import io
 import redis
 import uuid
 import time
+import json
 
 
 from PIL import Image, ImageColor
@@ -20,6 +21,8 @@ from flask_bootstrap import Bootstrap5
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_community.chat_models import ChatOllama
 from langchain_community.chat_message_histories import RedisChatMessageHistory
+
+from slack.events import check_and_process_event
 
 app = Flask(__name__)
 bootstrap = Bootstrap5(app)
@@ -58,6 +61,14 @@ def chat():
         chat_session = request.json.get("chat_session")
         add_message_to_chat_history(chat_session, HumanMessage(content))
         return jsonify(success=True)
+
+
+@app.route("/slack/events", methods=["POST"])
+async def slack_events():
+    raw_body = request.get_data()
+    body = json.loads(raw_body)
+    # request_type = body["type"]
+    return await check_and_process_event(body)
 
 
 @app.route("/stream", methods=["GET"])
