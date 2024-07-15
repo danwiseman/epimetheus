@@ -11,6 +11,7 @@ import io
 import redis
 import uuid
 import time
+import os
 
 
 from PIL import Image, ImageColor
@@ -21,26 +22,38 @@ from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_community.chat_models import ChatOllama
 from langchain_community.chat_message_histories import RedisChatMessageHistory
 
-app = Flask(__name__)
-bootstrap = Bootstrap5(app)
+from slack_bolt import App
+from slack_bolt.adapter.socket_mode import SocketModeHandler
+
+from slack_extension.chat import send_gpt_response, Event
+
+flask_app = Flask(__name__)
+bootstrap = Bootstrap5(flask_app)
 r = redis.Redis(host="localhost", port=6379, db=0)
 
+slack_app = App(
+    signing_secret=os.environ.get("SLACK_SIGNING_SECRET"),
+    token=os.environ.get("SLACK_BOT_TOKEN"),
+)
 
-with open("app/prompts/momo-rin-persona.md", "r") as f:
-    system_prompt = f.read()
+system_prompt = "TODO: Add system prompt here"
+
+##########
+# Flask App Routes
+##########
 
 
-@app.context_processor
+@flask_app.context_processor
 def inject_dynamic_data():
     return dict(sidebar_chats=get_recent_chats())
 
 
-@app.route("/", methods=["GET"])
+@flask_app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
 
 
-@app.route("/chat", methods=["GET", "POST"])
+@flask_app.route("/chat", methods=["GET", "POST"])
 def chat():
     if request.method == "GET":
         chat_session = request.args.get("chat_session")
@@ -60,7 +73,7 @@ def chat():
         return jsonify(success=True)
 
 
-@app.route("/stream", methods=["GET"])
+@flask_app.route("/stream", methods=["GET"])
 def stream():
     chat_session = request.args.get("chat_session")
     print(chat_session)
@@ -86,14 +99,14 @@ def stream():
     return Response(stream_with_context(generate()), mimetype="text/event-stream")
 
 
-@app.route("/reset", methods=["POST"])
+@flask_app.route("/reset", methods=["POST"])
 def reset_chat():
     global chat_history
     chat_history = []
     return jsonify(success=True)
 
 
-@app.route("/image_generate")
+@flask_app.route("/image_generate")
 def image_generate():
     image = Image.new("RGB", (256, 256), ImageColor.getrgb("gray"))
     image_io = io.BytesIO()
@@ -113,7 +126,7 @@ def add_message_to_chat_history(chat_session, message):
 
 
 def generate_chat_title(messages):
-    with open("app/prompts/title-creation-prompt.md", "r") as f:
+    with open("flask_app/prompts/title-creation-prompt.md", "r") as f:
         title_prompt = f.read()
 
     chat = ChatOllama(model="llama3", base_url="http://ollama.ai.local")
@@ -180,5 +193,22 @@ def get_recent_chats():
     return recent_chats
 
 
+##########
+# Slack App Routes
+##########
+
+
+@slack_app.event("app_mention")
+def handle_message(body, say):
+    event = Event(
+        channel=body["event"]["channel"],
+        ts=body["event"]["ts"],
+        thread_ts=body["event"].get("thread_ts"),
+    )
+    send_gpt_response(event, say)
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    handler = SocketModeHandler(slack_app, os.environ["SLACK_APP_TOKEN"])
+    handler.start()
+    flask_app.run(debug=True)

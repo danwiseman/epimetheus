@@ -1,11 +1,14 @@
 import os
-from slack_sdk.errors import SlackApiError
 import requests
 import pathlib
 from slack_bolt import App
 import re
 
-from ai import get_messages_from_slack_messages, get_response_from_model, prompt_models
+from slack_extension.ai import (
+    prompt_models,
+    get_valid_messages,
+    get_response,
+)
 
 app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
 
@@ -23,21 +26,11 @@ class Event:
         self.thread_ts = thread_ts
 
 
-async def post_image_message():
+def post_image_message():
     pass
 
 
-@app.event("message")  # Listens to all messages in the Slack app
-async def handle_message(body, say):
-    event = Event(
-        channel=body["event"]["channel"],
-        ts=body["event"]["ts"],
-        thread_ts=body["event"].get("thread_ts"),
-    )
-    await send_gpt_response(event, say)
-
-
-async def send_gpt_response(event: Event, say):
+def send_gpt_response(event: Event, say):
     channel = event.channel
     ts = event.ts
     thread_ts = event.thread_ts if event.thread_ts else ts
@@ -54,17 +47,20 @@ async def send_gpt_response(event: Event, say):
             response["messages"][0]["text"].replace("<@.*?>", "")
         )
 
-        prompts = await get_messages_from_slack_messages(response["messages"])
+        print(f"received '{response['messages'][0]['text']}'")
+
+        prompts = get_valid_messages(response["messages"])
 
         print(f"Using model {model}")
+        print(f"Prompts: {prompts}")
 
-        ai_response = get_response_from_model(prompts, model)
+        ai_response = get_response(prompts, model)
 
         if not ai_response:
             raise Exception("No response")
 
-        if model == prompt_models.IMAGE:
-            stream, filename = await url_to_read_stream(ai_response.content)
+        if model == prompt_models["IMAGE"]:
+            stream, filename = url_to_read_stream(ai_response.content)
             app.client.files_upload_v2(
                 file=stream, filename=filename, thread_ts=ts, channel_id=channel
             )
@@ -73,18 +69,11 @@ async def send_gpt_response(event: Event, say):
             app.client.reactions_add(channel=channel, name="rocket", timestamp=ts)
 
     except Exception as e:
-        if isinstance(e, SlackApiError):
-            say(
-                channel=channel,
-                text=f"<@{os.environ.get('SLACK_ADMIN_MEMBER_ID')}> Error: {str(e)}",
-                thread_ts=ts,
-            )
-        else:
-            say(
-                channel=channel,
-                text=f"<@{os.environ.get('SLACK_ADMIN_MEMBER_ID')}> Error: {str(e)}",
-                thread_ts=ts,
-            )
+        say(
+            channel=channel,
+            text=f"<@{os.environ.get('SLACK_ADMIN_MEMBER_ID')}> Error: {str(e)}",
+            thread_ts=ts,
+        )
 
 
 def get_prompt_models_from_slack_emoji(message_text: str):
@@ -97,7 +86,7 @@ def get_prompt_models_from_slack_emoji(message_text: str):
     return prompt_models["CHAT"]
 
 
-async def url_to_read_stream(url: str):
+def url_to_read_stream(url: str):
     response = requests.get(url, stream=True)
     filename = pathlib.Path(url).name
     return (response.raw, filename)
