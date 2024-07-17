@@ -210,7 +210,7 @@ def handle_message(body, say):
 
 
 def runFlask():
-    flask_app.run(debug=True, use_reloader=False)
+    flask_app.run(debug=True, use_reloader=False, host="0.0.0.0")
 
 
 def runSlack():
