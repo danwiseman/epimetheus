@@ -30,12 +30,19 @@ from slack_extension.chat import send_gpt_response, Event
 
 flask_app = Flask(__name__)
 bootstrap = Bootstrap5(flask_app)
-r = redis.Redis(host="localhost", port=6379, db=0)
+
+redis_host = os.environ.get("REDIS_HOST") or "localhost"
+redis_port = int(os.environ.get("REDIS_PORT") or 6379)
+redis_url = f"redis://{redis_host}:{redis_port}"
+
+r = redis.Redis(host=redis_host, port=redis_port, db=0)
 
 slack_app = App(
     signing_secret=os.environ.get("SLACK_SIGNING_SECRET"),
     token=os.environ.get("SLACK_BOT_TOKEN"),
 )
+
+ollama_base_url = os.environ.get("OLLAMA_BASE_URL") or "http://localhost:11434"
 
 system_prompt = "TODO: Add system prompt here"
 
@@ -83,7 +90,7 @@ def stream():
         assistant_response_content = ""
 
         messages = chat_message_history(chat_session).messages
-        chat = ChatOllama(model="llama3", base_url="http://ollama.ai.local")
+        chat = ChatOllama(model="llama3", base_url=ollama_base_url)
 
         for chunk in chat.stream(messages):
             if chunk.content:
@@ -118,7 +125,7 @@ def image_generate():
 
 def chat_message_history(chat_session):
     return RedisChatMessageHistory(
-        chat_session, url="redis://localhost:6379", key_prefix="message_history:"
+        chat_session, url=redis_url, key_prefix="message_history:"
     )
 
 
@@ -130,7 +137,7 @@ def generate_chat_title(messages):
     with open("flask_app/prompts/title-creation-prompt.md", "r") as f:
         title_prompt = f.read()
 
-    chat = ChatOllama(model="llama3", base_url="http://ollama.ai.local")
+    chat = ChatOllama(model="llama3", base_url=ollama_base_url)
 
     messages.append(HumanMessage(title_prompt))
 
