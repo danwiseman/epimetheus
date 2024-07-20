@@ -5,10 +5,10 @@ from slack_bolt import App
 import re
 
 from slack_extension.ai import (
-    prompt_models,
     get_valid_messages,
-    get_response,
 )
+
+from ai.ai_client import prompt_models, get_response
 
 app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
 
