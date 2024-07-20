@@ -21,7 +21,6 @@ from flask_bootstrap import Bootstrap5
 
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_community.chat_models import ChatOllama
-from langchain_community.chat_message_histories import RedisChatMessageHistory
 
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
@@ -92,13 +91,13 @@ def chat():
 @flask_app.route("/stream", methods=["GET"])
 def stream():
     chat_session = request.args.get("chat_session")
-    print(chat_session)
+    ai_client.chat_session = chat_session
 
     def generate():
         assistant_response_content = ""
 
-        messages = chat_message_history(chat_session).messages
-        chat = ChatOllama(model="llama3", base_url=ollama_base_url)
+        messages = ai_client.get_message_history().messages
+        chat = ai_client.client
 
         for chunk in chat.stream(messages):
             if chunk.content:
@@ -107,10 +106,12 @@ def stream():
                 yield f"data: {data}\n\n"
 
         yield "data: finish_reason: stop\n\n"
-        add_message_to_chat_history(chat_session, AIMessage(assistant_response_content))
+        ai_client.append_to_message_history(
+            message=AIMessage(assistant_response_content)
+        )
         if not get_chat_title(chat_session):
-            messages = chat_message_history(chat_session).messages
-            add_chat_title(chat_session, generate_chat_title(messages))
+            messages = ai_client.get_message_history().messages
+            add_chat_title(ai_client.chat_session, generate_chat_title(messages))
 
     return Response(stream_with_context(generate()), mimetype="text/event-stream")
 
@@ -129,16 +130,6 @@ def image_generate():
     image.save(image_io, "PNG")
     image_io.seek(0)
     return send_file(image_io, mimetype="image/png")
-
-
-def chat_message_history(chat_session):
-    return RedisChatMessageHistory(
-        chat_session, url=redis_url, key_prefix="message_history:"
-    )
-
-
-def add_message_to_chat_history(chat_session, message):
-    return chat_message_history(chat_session).add_messages([message])
 
 
 def generate_chat_title(messages):
