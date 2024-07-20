@@ -24,11 +24,11 @@ class AIClient:
         self._redis_url = redis_url
         self._chat_session = chat_session
         self._system_prompt = system_prompt
-        self._client = self.client()
+        self._client = ChatOllama(model=self._prompt_model, base_url=self._base_url)
 
     @property
-    def client(self):
-        return ChatOllama(model=self._prompt_model, base_url=self._base_url)
+    def chat_client(self):
+        return self._client
 
     @property
     def chat_session(self):
