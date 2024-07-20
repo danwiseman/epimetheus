@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: "2024-07-17T19:29:05Z"
+  labels:
+    app: epimetheus
+  name: epimetheus
+spec:
+  containers:
+    - args:
+        - /opt/bitnami/scripts/redis/run.sh
+      env:
+        - name: ALLOW_EMPTY_PASSWORD
+          value: "yes"
+      image: docker.io/bitnami/redis:7.2
+      name: redis
+      ports:
+        - containerPort: 5000
+          hostPort: 5000
+      securityContext:
+        runAsNonRoot: true
+      volumeMounts:
+        - mountPath: /bitnami/redis/data
+          name: epimetheus_redis-pvc
+    - env:
+        - name: OLLAMA_BASE_URL
+          value: http://localhost:11434
+      image: localhost/epimetheus:0.0.3
+      name: epimetheus-app
+      securityContext:
+        runAsNonRoot: true
+  volumes:
+    - name: epimetheus_redis-pvc
+      persistentVolumeClaim:
+        claimName: epimetheus_redis
