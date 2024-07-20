@@ -1,4 +1,5 @@
 import os
+import re
 from langchain_community.chat_models import ChatOllama
 from langchain_core.messages import HumanMessage, AIMessage
 
@@ -35,7 +36,8 @@ def set_message(message):
     if is_bot(message):
         return AIMessage(content=message["text"])
     else:
-        return HumanMessage(content=message["text"].replace("<@.*?>", ""))
+        message_removed_mention = re.sub(r"<@.*?>", "", message["text"])
+        return HumanMessage(content=message_removed_mention)
 
 
 def get_response(prompts, prompt_model):
