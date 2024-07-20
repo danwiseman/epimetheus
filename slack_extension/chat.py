@@ -8,14 +8,14 @@ from slack_extension.ai import (
     get_valid_messages,
 )
 
-from ai.ai_client import prompt_models, get_response
+from ai.ai_client import PROMPT_MODELS, AIClient
 
 app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
 
 emoji_to_model = {
-    "camera": prompt_models["IMAGE"],
-    "avocado": prompt_models["CODE"],
-    "pizza": prompt_models["CHAT"],
+    "camera": PROMPT_MODELS["IMAGE"],
+    "avocado": PROMPT_MODELS["CODE"],
+    "pizza": PROMPT_MODELS["CHAT"],
 }
 
 
@@ -54,12 +54,15 @@ def send_gpt_response(event: Event, say):
         print(f"Using model {model}")
         print(f"Prompts: {prompts}")
 
-        ai_response = get_response(prompts, model)
+        slack_ai_client = AIClient(
+            prompt_model=model, api_base_url=os.environ.get("OLLAMA_BASE_URL")
+        )
+        ai_response = slack_ai_client.get_response(prompts)
 
         if not ai_response:
             raise Exception("No response")
 
-        if model == prompt_models["IMAGE"]:
+        if model == PROMPT_MODELS["IMAGE"]:
             stream, filename = url_to_read_stream(ai_response.content)
             app.client.files_upload_v2(
                 file=stream, filename=filename, thread_ts=ts, channel_id=channel
@@ -83,7 +86,7 @@ def get_prompt_models_from_slack_emoji(message_text: str):
         emoji = matches[1]
         print(f"Found emoji {emoji}")
 
-    return prompt_models["CHAT"]
+    return PROMPT_MODELS["CHAT"]
 
 
 def url_to_read_stream(url: str):
