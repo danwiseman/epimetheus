@@ -17,29 +17,44 @@ class AIClient:
         api_base_url="http://localhost:11434",
         chat_session=None,
         system_prompt=None,
-        redis_url="http://localhost:6789",
+        redis_url="http://localhost:6379",
     ):
-        self.prompt_model = prompt_model
-        self.base_url = api_base_url
-        self.redis_url = redis_url
-        self.chat_session = chat_session
-        self.system_prompt = system_prompt
+        self._prompt_model = prompt_model
+        self._base_url = api_base_url
+        self._redis_url = redis_url
+        self._chat_session = chat_session
+        self._system_prompt = system_prompt
+        self._client = self.client()
+
+    @property
+    def client(self):
+        return ChatOllama(model=self._prompt_model, base_url=self._base_url)
+
+    @property
+    def chat_session(self):
+        return self._chat_session
+
+    @chat_session.setter
+    def chat_session(self, chat_session):
+        if isinstance(chat_session, str):
+            self._chat_session = chat_session
+        else:
+            raise ValueError("Name must be a string.")
 
     def get_response(self, prompts):
         response = None
 
-        if self.prompt_model == PROMPT_MODELS["IMAGE"]:
+        if self._prompt_model == PROMPT_MODELS["IMAGE"]:
             # For image generation (example placeholder for DallEAPIWrapper)
             pass  # Implement actual logic here if needed
         else:
-            client = ChatOllama(model=self.prompt_model, base_url=self.base_url)
-            response = client.invoke(prompts)
+            response = self._client.invoke(prompts)
 
         return response
 
     def get_message_history(self):
         return RedisChatMessageHistory(
-            self.chat_session, url=self.redis_url, key_prefix="message_history:"
+            self._chat_session, url=self._redis_url, key_prefix="message_history:"
         )
 
     def append_to_message_history(self, message):

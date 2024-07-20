@@ -26,6 +26,7 @@ from langchain_community.chat_message_histories import RedisChatMessageHistory
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
+from ai.ai_client import PROMPT_MODELS, AIClient
 from slack_extension.chat import send_gpt_response, Event
 
 flask_app = Flask(__name__)
@@ -45,6 +46,12 @@ slack_app = App(
 ollama_base_url = os.environ.get("OLLAMA_BASE_URL") or "http://localhost:11434"
 
 system_prompt = "TODO: Add system prompt here"
+
+ai_client = AIClient(
+    prompt_model=PROMPT_MODELS["CHAT"],
+    api_base_url=ollama_base_url,
+    redis_url=redis_url,
+)
 
 ##########
 # Flask App Routes
@@ -66,18 +73,19 @@ def chat():
     if request.method == "GET":
         chat_session = request.args.get("chat_session")
         if not chat_session:
-            chat_session = str(uuid.uuid4())
-            add_message_to_chat_history(chat_session, SystemMessage(system_prompt))
+            ai_client.chat_session = str(uuid.uuid4())
+            ai_client.append_to_message_history(message=SystemMessage(system_prompt))
 
         return render_template(
             "chat.html",
-            chat_history=chat_message_history(chat_session).messages,
-            chat_session=chat_session,
+            chat_history=ai_client.get_message_history().messages,
+            chat_session=ai_client.chat_session,
         )
     else:
         content = request.json.get("message")
         chat_session = request.json.get("chat_session")
-        add_message_to_chat_history(chat_session, HumanMessage(content))
+        ai_client.chat_session = chat_session
+        ai_client.append_to_message_history(message=HumanMessage(content))
         return jsonify(success=True)
 
 
