@@ -12,7 +12,7 @@ import redis
 import uuid
 import time
 import os
-
+import threading
 
 from PIL import Image, ImageColor
 
@@ -21,27 +21,23 @@ from flask_bootstrap import Bootstrap5
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_community.chat_models import ChatOllama
 
+from slack_bolt import App
+from slack_bolt.adapter.socket_mode import SocketModeHandler
 
 from ai.ai_client import PROMPT_MODELS, AIClient
 
-app = Flask(__name__)
-bootstrap = Bootstrap5(app)
+from slack_extension.chat import send_gpt_response, Event
 
+
+flask_app = Flask(__name__)
+bootstrap = Bootstrap5(flask_app)
+
+ollama_base_url = os.environ.get("OLLAMA_BASE_URL") or "http://localhost:11434"
 redis_host = os.environ.get("REDIS_HOST") or "localhost"
 redis_port = int(os.environ.get("REDIS_PORT") or 6379)
 redis_url = f"redis://{redis_host}:{redis_port}"
 
 r = redis.Redis(host=redis_host, port=redis_port, db=0)
-
-# slack_app = App(
-#     signing_secret=os.environ.get("SLACK_SIGNING_SECRET") or None,
-#     token=os.environ.get("SLACK_BOT_TOKEN") or None,
-# )
-
-ollama_base_url = os.environ.get("OLLAMA_BASE_URL") or "http://localhost:11434"
-
-system_prompt = "TODO: Add system prompt here"
-
 
 ai_client = AIClient(
     prompt_model=PROMPT_MODELS["CHAT"],
@@ -49,22 +45,25 @@ ai_client = AIClient(
     redis_url=redis_url,
 )
 
+system_prompt = "TODO: Add system prompt here"
+
+
 ##########
 # Flask App Routes
 ##########
 
 
-@app.context_processor
+@flask_app.context_processor
 def inject_dynamic_data():
     return dict(sidebar_chats=get_recent_chats())
 
 
-@app.route("/", methods=["GET"])
+@flask_app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
 
 
-@app.route("/chat", methods=["GET", "POST"])
+@flask_app.route("/chat", methods=["GET", "POST"])
 def chat():
     if request.method == "GET":
         chat_session = request.args.get("chat_session")
@@ -85,7 +84,7 @@ def chat():
         return jsonify(success=True)
 
 
-@app.route("/stream", methods=["GET"])
+@flask_app.route("/stream", methods=["GET"])
 def stream():
     chat_session = request.args.get("chat_session")
     ai_client.chat_session = chat_session
@@ -113,14 +112,14 @@ def stream():
     return Response(stream_with_context(generate()), mimetype="text/event-stream")
 
 
-@app.route("/reset", methods=["POST"])
+@flask_app.route("/reset", methods=["POST"])
 def reset_chat():
     global chat_history
     chat_history = []
     return jsonify(success=True)
 
 
-@app.route("/image_generate")
+@flask_app.route("/image_generate")
 def image_generate():
     image = Image.new("RGB", (256, 256), ImageColor.getrgb("gray"))
     image_io = io.BytesIO()
@@ -202,33 +201,37 @@ def get_recent_chats():
 ##########
 
 
-# @slack_app.event("app_mention")
-# def handle_message(body, say):
-#     event = Event(
-#         channel=body["event"]["channel"],
-#         ts=body["event"]["ts"],
-#         thread_ts=body["event"].get("thread_ts"),
-#     )
-#     send_gpt_response(event, say)
+slack_app = App(
+    signing_secret=os.environ.get("SLACK_SIGNING_SECRET") or None,
+    token=os.environ.get("SLACK_BOT_TOKEN") or None,
+)
 
 
-# def runFlask():
-#     flask_app.run(debug=True, use_reloader=False, host="0.0.0.0")
+@slack_app.event("app_mention")
+def handle_message(body, say):
+    event = Event(
+        channel=body["event"]["channel"],
+        ts=body["event"]["ts"],
+        thread_ts=body["event"].get("thread_ts"),
+    )
+    send_gpt_response(event, say)
 
 
-# def runSlack():
-#     handler = SocketModeHandler(slack_app, os.environ["SLACK_APP_TOKEN"])
-#     handler.start()
+def runFlask():
+    flask_app.run(debug=True, use_reloader=False, host="0.0.0.0")
+
+
+def runSlack():
+    handler = SocketModeHandler(slack_app, os.environ["SLACK_APP_TOKEN"])
+    handler.start()
 
 
 if __name__ == "__main__":
-    # flask_thread = threading.Thread(target=runFlask)
-    # # slack_thread = threading.Thread(target=runSlack)
+    flask_thread = threading.Thread(target=runFlask)
+    slack_thread = threading.Thread(target=runSlack)
 
-    # flask_thread.start()
-    # # slack_thread.start()
+    flask_thread.start()
+    slack_thread.start()
 
-    # flask_thread.join()
-    # # slack_thread.join()
-    #
-    app.run(debug=True, use_reloader=False, host="0.0.0.0")
+    flask_thread.join()
+    slack_thread.join()
