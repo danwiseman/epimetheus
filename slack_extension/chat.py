@@ -91,6 +91,7 @@ def get_prompt_models_from_slack_emoji(message_text: str):
             print(f"{emoji} did not match a model")
             return PROMPT_MODELS["CHAT"]
 
+    print("No emoji matched a model")
     return PROMPT_MODELS["CHAT"]
 
 
