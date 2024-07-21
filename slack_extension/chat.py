@@ -84,8 +84,14 @@ def get_prompt_models_from_slack_emoji(message_text: str):
     matches = re.search(regex, message_text)
     if matches and matches[1]:
         emoji = matches[1]
-        print(f"Found emoji {emoji}")
+        selected_model = emoji_to_model[emoji]
+        if selected_model:
+            return selected_model
+        else:
+            print(f"{emoji} did not match a model")
+            return PROMPT_MODELS["CHAT"]
 
+    print("No emoji matched a model")
     return PROMPT_MODELS["CHAT"]
 
 
