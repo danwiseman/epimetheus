@@ -120,5 +120,52 @@
 </script>
 
 {{ bootstrap.load_js() }}
+
+<script>
+  function addEmojiModelField() {
+    var container = document.getElementById('emoji-model-container');
+
+    var inputGroup = document.createElement('div');
+    inputGroup.className = 'input-group mb-3';
+
+    var emojiSpan = document.createElement('span');
+    emojiSpan.className = 'input-group-text';
+    emojiSpan.innerText = 'Emoji Text:';
+
+    inputGroup.appendChild(emojiSpan);
+
+    var emojiInput = document.createElement('input');
+    emojiInput.className = 'form-control';
+    // TODO: add id
+
+    inputGroup.appendChild(emojiInput);
+
+    var modelSpan = document.createElement('span');
+    modelSpan.className = 'input-group-text';
+
+    //var aiIcon = document.createElement('i');
+    //aiIcon.className = 'fa-solid fa-brain-circuit';
+
+    //modelSpan.appendChild(aiIcon);
+    modelSpan.innerHTML = '<i class="fa-solid fa-brain-circuit"></i>  AI Model:';
+
+    inputGroup.appendChild(modelSpan);
+
+    var modelSelect = document.createElement('select');
+    modelSelect.className = 'form-select';
+
+    var modelOptions = document.createElement('option');
+    modelOptions.innerText = 'llama';
+
+    modelSelect.appendChild(modelOptions);
+
+    inputGroup.appendChild(modelSelect);
+
+    container.appendChild(inputGroup);
+
+  }
+</script>
+
+
 </body>
 </html>
