@@ -57,7 +57,7 @@ def get_user_config(user_id):
 
     if not config:
         return {
-            "emoji_models": [{"id": 1, "emoji_id": "001", "model_id": "001"}]
+            "emoji_models": [{"id": 1, "emoji_id": "avocado", "model_id": "001"}]
         }  # Return a default
 
     # Convert byte strings to regular strings and decode JSON values
