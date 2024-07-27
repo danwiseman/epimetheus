@@ -163,6 +163,24 @@
 
     container.appendChild(inputGroup);
 
+    var promptContainer = document.createElement('div');
+    promptContainer.className = 'mb-3';
+
+    var promptLabel = document.createElement('label');
+    promptLabel.className = 'form-label';
+    promptLabel.innerText = 'Prompt';
+
+    promptContainer.appendChild(promptLabel);
+
+    var promptTextArea = document.createElement('textarea');
+    promptTextArea.className = 'form-control'
+    promptTextArea.rows = '3';
+
+    promptContainer.appendChild(promptTextArea);
+
+    container.appendChild(promptContainer);
+
+
   }
 </script>
 

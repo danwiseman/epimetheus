@@ -57,7 +57,9 @@ def get_user_config(user_id):
 
     if not config:
         return {
-            "emoji_models": [{"id": 1, "emoji_id": "avocado", "model_id": "001"}]
+            "emoji_models": [{"id": 1, "emoji_id": "avocado", "model_id": "001"}],
+            "default_model": "llama3.1:latest",
+            "ollama_base_url": ollama_base_url,
         }  # Return a default
 
     # Convert byte strings to regular strings and decode JSON values
@@ -70,13 +72,17 @@ def set_user_config(user_id, config):
     r.hmset("users:{}".format(user_id), {k: json.dumps(v) for k, v in config.items()})
 
 
+def get_ai_models():
+    from ollama import Client
+
+    client = Client(host=ollama_base_url)
+    return client.list()
+
+
 @flask_app.route("/", methods=["GET"])
 def index():
     return render_template(
-        "admin.html",
-        configuration=get_user_config(1),
-        models=[{"name": "llama3", "id": "001"}],
-        emojis=[{"name": "avocado", "id": "001"}],
+        "admin.html", configuration=get_user_config(1), models=get_ai_models()
     )
 
 
