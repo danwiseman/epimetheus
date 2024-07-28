@@ -49,7 +49,7 @@ system_prompt = "TODO: Add system prompt here"
 
 @flask_app.context_processor
 def inject_dynamic_data():
-    return dict(sidebar_chats={})
+    return dict(sidebar_chats={}, models=get_ai_models())
 
 
 def get_user_config(user_id):
@@ -82,9 +82,7 @@ def get_ai_models():
 
 @flask_app.route("/", methods=["GET"])
 def index():
-    return render_template(
-        "admin.html", configuration=get_user_config(1), models=get_ai_models()
-    )
+    return render_template("admin.html", configuration=get_user_config(1))
 
 
 @flask_app.route("/config", methods=["POST"])

@@ -1,215 +1,222 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-    <title>Epimetheus</title>
+    <head>
+        <title>Epimetheus</title>
 
-    <script src="https://kit.fontawesome.com/be9ac33f74.js" crossorigin="anonymous"></script>
+        <script
+            src="https://kit.fontawesome.com/be9ac33f74.js"
+            crossorigin="anonymous"
+        ></script>
 
+        <script
+            type="module"
+            src="{{ url_for('static', filename='assets/js/LexiMark.js') }}"
+        ></script>
 
-    <script type="module" src="{{ url_for('static', filename='assets/js/LexiMark.js') }}"></script>
+        {{ bootstrap.load_css() }}
 
-    {{ bootstrap.load_css() }}
+        <style>
+            .card {
+                display: flex;
+            }
 
-    <style>
+            .ai-avatar {
+                align-self: center; /* Align the avatar vertically */
+                margin-right: 1em; /* Add some space around the avatar */
+                max-width: 100px;
+                height: 100px;
+                object-fit: cover; /* This property scales the image to fit the element while preserving its aspect ratio */
+            }
 
+            .user-avatar {
+                align-self: center; /* Align the avatar vertically */
+                margin-right: 1em; /* Add some space around the avatar */
+                max-width: 25px;
+                height: 25px;
+                object-fit: cover;
+            }
 
-        .card {
-            display: flex;
-        }
+            #logo #hover-text {
+                display: none;
+            }
 
-        .ai-avatar {
-            align-self: center; /* Align the avatar vertically */
-            margin-right: 1em;   /* Add some space around the avatar */
-            max-width: 100px;
-            height: 100px;
-            object-fit: cover; /* This property scales the image to fit the element while preserving its aspect ratio */
-        }
+            #logo:hover #logo-text {
+                display: none;
+            }
 
-        .user-avatar {
-            align-self: center; /* Align the avatar vertically */
-            margin-right: 1em;   /* Add some space around the avatar */
-            max-width: 25px;
-            height: 25px;
-            object-fit: cover;
-        }
+            #logo:hover #hover-text {
+                display: inline;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg bg-primary" data-bs-theme="dark">
+            <div class="container-fluid">
+                <a class="navbar-brand btn btn-secondary" id="logo" href="#">
+                    <span id="logo-text">Epimetheus</span>
+                    <span id="hover-text"
+                        ><i class="fa-light fa-message-plus"></i> New Chat</span
+                    >
+                </a>
 
-        #logo #hover-text {
-            display: none;
-        }
-
-        #logo:hover #logo-text {
-            display: none;
-        }
-
-        #logo:hover #hover-text {
-            display: inline;
-        }
-
-
-
-
-
-    </style>
-
-
-
-</head>
-<body>
-
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg bg-primary" data-bs-theme="dark">
-    <div class="container-fluid">
-        <a class="navbar-brand  btn btn-secondary" id="logo" href="#">
-            <span id="logo-text">Epimetheus</span>
-            <span id="hover-text"><i class="fa-light fa-message-plus"></i> New Chat</span>
-        </a>
-
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="#">Chat</a>
-                </li>
-            </ul>
-        </div>
-    </div>
-</nav>
-<!-- Main content -->
-<div class="container-fluid">
-    <div class="row">
-        <!-- Left sidebar -->
-        <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-light sidebar d-flex">
-            <div class="position-sticky">
-                <h2 class="h5">Chats</h2>
-                <ul class="nav flex-column">
-                    {% for chat in sidebar_chats %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="/chat?chat_session={{ chat.session_id }}">{{ chat.chat_title }}</a>
-                    </li>
-                    {% endfor %}
-
-
-                </ul>
+                <button
+                    class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#navbarNav"
+                    aria-controls="navbarNav"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation"
+                >
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a
+                                class="nav-link active"
+                                aria-current="page"
+                                href="#"
+                                >Chat</a
+                            >
+                        </li>
+                    </ul>
+                </div>
             </div>
         </nav>
         <!-- Main content -->
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Left sidebar -->
+                <nav
+                    id="sidebar"
+                    class="col-md-3 col-lg-2 d-md-block bg-light sidebar d-flex"
+                >
+                    <div class="position-sticky">
+                        <h2 class="h5">Chats</h2>
+                        <ul class="nav flex-column">
+                            {% for chat in sidebar_chats %}
+                            <li class="nav-item">
+                                <a
+                                    class="nav-link"
+                                    href="/chat?chat_session={{ chat.session_id }}"
+                                    >{{ chat.chat_title }}</a
+                                >
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </nav>
+                <!-- Main content -->
 
-        {% block content %}{% endblock %}
+                {% block content %}{% endblock %}
+            </div>
+        </div>
 
-    </div>
-</div>
+        {{ bootstrap.load_js() }}
 
-{{ bootstrap.load_js() }}
+        <script
+            src="https://code.jquery.com/jquery-3.7.1.min.js"
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+            crossorigin="anonymous"
+        ></script>
 
-<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-
-<script>
-
-    $(document).ready(function() {
-        $('#logo').hover(
-            function() {
-                $(this).children('#logo-text').hide();
-                $(this).children('#hover-text').show();
-            },
-            function() {
-                $(this).children('#logo-text').show();
-                $(this).children('#hover-text').hide();
-            }
-        );
-
-    });
-
-    $(document).on('submit', '#config', function (e)  {
-        e.preventDefault();
-            $.ajax({
-                type: 'post',
-                url: '/config',
-                contentType:"application/json; charset=utf-8",
-                data: JSON.stringify( $('#config').serializeArray() ),
-                success: function (q) {
-                    console.log("success");
-                }
+        <script>
+            $(document).ready(function () {
+                $("#logo").hover(
+                    function () {
+                        $(this).children("#logo-text").hide();
+                        $(this).children("#hover-text").show();
+                    },
+                    function () {
+                        $(this).children("#logo-text").show();
+                        $(this).children("#hover-text").hide();
+                    },
+                );
             });
 
-    });
+            $(document).on("submit", "#config", function (e) {
+                e.preventDefault();
+                $.ajax({
+                    type: "post",
+                    url: "/config",
+                    contentType: "application/json; charset=utf-8",
+                    data: JSON.stringify($("#config").serializeArray()),
+                    success: function (q) {
+                        console.log("success");
+                    },
+                });
+            });
+        </script>
+
+        <script>
+            function addEmojiModelField() {
+              var container = document.getElementById('emoji-model-container');
+
+              var inputs = container.getElementsByTagName('input');
+              var emojiFieldCount = inputs.length;
+
+              var inputGroup = document.createElement('div');
+              inputGroup.className = 'input-group mb-3';
+
+              var emojiSpan = document.createElement('span');
+              emojiSpan.className = 'input-group-text';
+              emojiSpan.innerText = 'Emoji Text:';
+
+              inputGroup.appendChild(emojiSpan);
+
+              var emojiInput = document.createElement('input');
+              emojiInput.className = 'form-control';
+              emojiInput.name = 'emojiText-' + emojiFieldCount;
+              // TODO: add id
+
+              inputGroup.appendChild(emojiInput);
+
+              var modelSpan = document.createElement('span');
+              modelSpan.className = 'input-group-text';
+
+              //var aiIcon = document.createElement('i');
+              //aiIcon.className = 'fa-solid fa-brain-circuit';
+
+              //modelSpan.appendChild(aiIcon);
+              modelSpan.innerHTML = '<i class="fa-solid fa-brain-circuit"></i>  AI Model:';
+
+              inputGroup.appendChild(modelSpan);
+
+              var modelSelect = document.createElement('select');
+              modelSelect.className = 'form-select';
+              modelSelect.name = 'modelForEmoji-' + emojiFieldCount;
+
+              {% for model in models.models %}
+                var modelOption{{ model.digest }} = document.createElement('option');
+                modelOption{{ model.digest }}.innerText = '{{ model.name }}';
+                modelSelect.appendChild(modelOption{{ model.digest }});
+              {% endfor %}
+
+              inputGroup.appendChild(modelSelect);
+              container.appendChild(inputGroup);
+
+              var promptContainer = document.createElement('div');
+              promptContainer.className = 'mb-3';
+
+              var promptLabel = document.createElement('label');
+              promptLabel.className = 'form-label';
+              promptLabel.innerText = 'Prompt';
+
+              promptContainer.appendChild(promptLabel);
+
+              var promptTextArea = document.createElement('textarea');
+              promptTextArea.className = 'form-control'
+              promptTextArea.name = 'emojiModelPrompt-' + emojiFieldCount;
+              promptTextArea.rows = '3';
+
+              promptContainer.appendChild(promptTextArea);
+
+              container.appendChild(promptContainer);
 
 
-
-</script>
-
-
-
-<script>
-  function addEmojiModelField() {
-    var container = document.getElementById('emoji-model-container');
-
-    var inputs = container.getElementsByTagName('input');
-    var emojiFieldCount = inputs.length;
-
-    var inputGroup = document.createElement('div');
-    inputGroup.className = 'input-group mb-3';
-
-    var emojiSpan = document.createElement('span');
-    emojiSpan.className = 'input-group-text';
-    emojiSpan.innerText = 'Emoji Text:';
-
-    inputGroup.appendChild(emojiSpan);
-
-    var emojiInput = document.createElement('input');
-    emojiInput.className = 'form-control';
-    emojiInput.name = 'emojiText-' + emojiFieldCount;
-    // TODO: add id
-
-    inputGroup.appendChild(emojiInput);
-
-    var modelSpan = document.createElement('span');
-    modelSpan.className = 'input-group-text';
-
-    //var aiIcon = document.createElement('i');
-    //aiIcon.className = 'fa-solid fa-brain-circuit';
-
-    //modelSpan.appendChild(aiIcon);
-    modelSpan.innerHTML = '<i class="fa-solid fa-brain-circuit"></i>  AI Model:';
-
-    inputGroup.appendChild(modelSpan);
-
-    var modelSelect = document.createElement('select');
-    modelSelect.className = 'form-select';
-    modelSelect.name = 'modelForEmoji-' + emojiFieldCount;
-
-    var modelOptions = document.createElement('option');
-    modelOptions.innerText = 'llama';
-
-    modelSelect.appendChild(modelOptions);
-
-    inputGroup.appendChild(modelSelect);
-
-    container.appendChild(inputGroup);
-
-    var promptContainer = document.createElement('div');
-    promptContainer.className = 'mb-3';
-
-    var promptLabel = document.createElement('label');
-    promptLabel.className = 'form-label';
-    promptLabel.innerText = 'Prompt';
-
-    promptContainer.appendChild(promptLabel);
-
-    var promptTextArea = document.createElement('textarea');
-    promptTextArea.className = 'form-control'
-    promptTextArea.name = 'emojiModelPrompt-' + emojiFieldCount;
-    promptTextArea.rows = '3';
-
-    promptContainer.appendChild(promptTextArea);
-
-    container.appendChild(promptContainer);
-
-
-  }
-</script>
-
-
-</body>
+            }
+        </script>
+    </body>
 </html>
