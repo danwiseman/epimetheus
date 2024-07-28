@@ -145,6 +145,9 @@
   function addEmojiModelField() {
     var container = document.getElementById('emoji-model-container');
 
+    var inputs = container.getElementsByTagName('input');
+    var emojiFieldCount = inputs.length;
+
     var inputGroup = document.createElement('div');
     inputGroup.className = 'input-group mb-3';
 
@@ -156,6 +159,7 @@
 
     var emojiInput = document.createElement('input');
     emojiInput.className = 'form-control';
+    emojiInput.name = 'emojiText-' + emojiFieldCount;
     // TODO: add id
 
     inputGroup.appendChild(emojiInput);
@@ -173,6 +177,7 @@
 
     var modelSelect = document.createElement('select');
     modelSelect.className = 'form-select';
+    modelSelect.name = 'modelForEmoji-' + emojiFieldCount;
 
     var modelOptions = document.createElement('option');
     modelOptions.innerText = 'llama';
@@ -194,6 +199,7 @@
 
     var promptTextArea = document.createElement('textarea');
     promptTextArea.className = 'form-control'
+    promptTextArea.name = 'emojiModelPrompt-' + emojiFieldCount;
     promptTextArea.rows = '3';
 
     promptContainer.appendChild(promptTextArea);

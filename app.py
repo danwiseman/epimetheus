@@ -58,7 +58,7 @@ def get_user_config(user_id):
 
     if not config:
         return {
-            "emoji_models": [{"id": 1, "emoji_id": "avocado", "model_id": "001"}],
+            "emoji_models": [{"id": 0, "emoji_id": "avocado", "model_id": "0"}],
             "default_model": "llama3.1:latest",
             "ollama_base_url": ollama_base_url,
         }  # Return a default
