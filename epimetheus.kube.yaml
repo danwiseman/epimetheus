@@ -17,6 +17,8 @@ spec:
       ports:
         - containerPort: 5000
           hostPort: 5000
+        - containerPort: 6379
+          hostPort: 6379
       securityContext:
         runAsNonRoot: true
       volumeMounts:
@@ -24,8 +26,23 @@ spec:
           name: epimetheus_redis-pvc
     - env:
         - name: OLLAMA_BASE_URL
-          value: http://localhost:11434
-      image: localhost/epimetheus:0.0.3
+          value: http://ollama.ai.local
+        - name: SLACK_BOT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: slack-app
+              key: slack-bot-token
+        - name: SLACK_APP_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: slack-app
+              key: slack-app-token
+        - name: SLACK_SIGNING_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: slack-app
+              key: slack-signing-secret
+      image: localhost/epimetheus-test
       name: epimetheus-app
       securityContext:
         runAsNonRoot: true
