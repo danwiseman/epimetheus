@@ -176,10 +176,6 @@
               var modelSpan = document.createElement('span');
               modelSpan.className = 'input-group-text';
 
-              //var aiIcon = document.createElement('i');
-              //aiIcon.className = 'fa-solid fa-brain-circuit';
-
-              //modelSpan.appendChild(aiIcon);
               modelSpan.innerHTML = '<i class="fa-solid fa-brain-circuit"></i>  AI Model:';
 
               inputGroup.appendChild(modelSpan);
@@ -188,6 +184,7 @@
               modelSelect.className = 'form-select';
               modelSelect.name = 'modelForEmoji-' + emojiFieldCount;
 
+              // TODO: generate a list of models instead and loop through.
               {% for model in models.models %}
                 var modelOption{{ model.digest }} = document.createElement('option');
                 modelOption{{ model.digest }}.innerText = '{{ model.name }}';
