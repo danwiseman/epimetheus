@@ -1,6 +1,7 @@
 from flask import (
     Flask,
     render_template,
+    request,
     send_file,
 )
 import io
@@ -84,6 +85,13 @@ def index():
     return render_template(
         "admin.html", configuration=get_user_config(1), models=get_ai_models()
     )
+
+
+@flask_app.route("/config", methods=["POST"])
+def config():
+    config = request.json.get("config")
+    # TODO: add some validation
+    set_user_config(1, config=config)
 
 
 @flask_app.route("/image_generate")
