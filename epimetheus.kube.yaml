@@ -17,6 +17,8 @@ spec:
       ports:
         - containerPort: 5000
           hostPort: 5000
+        - containerPort: 6379
+          hostPort: 6379
       securityContext:
         runAsNonRoot: true
       volumeMounts:

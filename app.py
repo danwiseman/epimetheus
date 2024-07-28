@@ -1,5 +1,6 @@
 from flask import (
     Flask,
+    jsonify,
     render_template,
     request,
     send_file,
@@ -9,6 +10,7 @@ import redis
 import os
 import threading
 import json
+
 
 from PIL import Image, ImageColor
 
@@ -58,10 +60,12 @@ def get_user_config(user_id):
 
     if not config:
         return {
-            "emoji_models": [{"id": 0, "emoji_id": "avocado", "model_id": "0"}],
-            "default_model": "llama3.1:latest",
-            "ollama_base_url": ollama_base_url,
-        }  # Return a default
+            "ollamaUrl": ollama_base_url,
+            "redisUrl": redis_url,
+            "qdrandUrl": "not implemented",
+            "modelForDefault": "llama3.1:latest",
+            "defaultModelPrompt": "",
+        }
 
     # Convert byte strings to regular strings and decode JSON values
     user_config = {k.decode(): json.loads(v.decode()) for k, v in config.items()}
@@ -71,6 +75,26 @@ def get_user_config(user_id):
 def set_user_config(user_id, config):
     # Store the user's configuration in Redis using a prefix
     r.hmset("users:{}".format(user_id), {k: json.dumps(v) for k, v in config.items()})
+
+
+def group_emoji_models(config):
+    data = config
+    new_data = {}
+    emojiModels = []
+
+    for key, value in data.items():
+        if "-" in key and key.split("-")[-1].isdigit():
+            base_key = key.rsplit("-", 1)[0]
+            index = int(key.rsplit("-", 1)[1])
+            while len(emojiModels) <= index:
+                emojiModels.append({})
+            emojiModels[index][base_key] = value
+        else:
+            new_data[key] = value
+
+    new_data["emojiModels"] = emojiModels
+
+    return new_data
 
 
 def get_ai_models():
@@ -87,9 +111,12 @@ def index():
 
 @flask_app.route("/config", methods=["POST"])
 def config():
-    config = request.json.get("config")
+    config = request.json
     # TODO: add some validation
-    set_user_config(1, config=config)
+    if config:
+        set_user_config(1, config=group_emoji_models(config))
+        return jsonify(success=True)
+    return jsonify(success=False)
 
 
 @flask_app.route("/image_generate")

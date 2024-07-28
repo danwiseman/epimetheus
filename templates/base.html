@@ -123,6 +123,16 @@
         ></script>
 
         <script>
+
+            function convertFormToJSON(form) {
+                const array = $(form).serializeArray(); // Encodes the set of form elements as an array of names and values.
+                const json = {};
+                $.each(array, function () {
+                    json[this.name] = this.value || "";
+                });
+                return json;
+            }
+
             $(document).ready(function () {
                 $("#logo").hover(
                     function () {
@@ -142,7 +152,7 @@
                     type: "post",
                     url: "/config",
                     contentType: "application/json; charset=utf-8",
-                    data: JSON.stringify($("#config").serializeArray()),
+                    data: JSON.stringify(convertFormToJSON('#config')),
                     success: function (q) {
                         console.log("success");
                     },
