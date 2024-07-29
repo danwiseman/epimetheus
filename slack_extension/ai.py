@@ -1,5 +1,5 @@
 import re
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 
 def get_valid_messages(messages):
@@ -28,3 +28,7 @@ def set_message(message):
     else:
         message_removed_mention = re.sub(r"<@.*?>", "", message["text"])
         return HumanMessage(content=message_removed_mention)
+
+
+def set_system_prompt(prompt, messages):
+    return messages.insert(0, SystemMessage(content=prompt))

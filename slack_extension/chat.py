@@ -5,9 +5,7 @@ from slack_bolt import App
 import re
 
 from config import get_user_config
-from slack_extension.ai import (
-    get_valid_messages,
-)
+from slack_extension.ai import get_valid_messages, set_system_prompt
 
 from ai.ai_client import AIClient
 
@@ -39,16 +37,15 @@ def send_gpt_response(event: Event, say):
         # React to provide feedback to the user
         app.client.reactions_add(channel=channel, name="thinking_face", timestamp=ts)
 
-        model = get_prompt_models_from_slack_emoji(
+        model, system_prompt = get_prompt_models_from_slack_emoji(
             response["messages"][0]["text"].replace("<@.*?>", "")
         )
 
         print(f"received '{response['messages'][0]['text']}'")
 
         prompts = get_valid_messages(response["messages"])
-
-        print(f"Using model {model}")
-        print(f"Prompts: {prompts}")
+        if system_prompt:
+            prompts = set_system_prompt(system_prompt, prompts)
 
         slack_ai_client = AIClient(
             prompt_model=model, api_base_url=os.environ.get("OLLAMA_BASE_URL")
@@ -82,18 +79,31 @@ def get_prompt_models_from_slack_emoji(message_text: str):
     if matches and matches[1] and config["emojiModels"]:
         emoji = matches[1].replace(":", "")
         selected_model = find_model(data=config["emojiModels"], emoji=emoji)
+        selected_prompt = find_model_prompt(data=config["emojiModels"], emoji=emoji)
+        if len(selected_prompt) > 0:
+            selected_prompt = selected_prompt[0]
+        else:
+            selected_prompt = None
         if len(selected_model) > 0:
-            return selected_model[0]
+            return selected_model[0], selected_prompt
         else:
             print(f"{emoji} did not match a model")
-            return config["modelForDefault"]
+            return config["modelForDefault"], config["defaultModelPrompt"]
 
     print("No emoji matched a model")
-    return config["modelForDefault"]
+    return config["modelForDefault"], config["defaultModelPrompt"]
 
 
 def find_model(data, emoji):
     return [item["modelForEmoji"] for item in data if item["emojiText"] == emoji]
+
+
+def find_model_prompt(data, emoji):
+    return [
+        item["emojiModelPrompt"]
+        for item in data
+        if "emojiModelPrompt" in item and item["emojiText"] == emoji
+    ]
 
 
 def url_to_read_stream(url: str):
