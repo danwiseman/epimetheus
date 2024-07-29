@@ -97,6 +97,10 @@ def group_emoji_models(config):
     return new_data
 
 
+def find_model(data, emoji):
+    return [item["modelForEmoji"] for item in data if item["emojiText"] == emoji]
+
+
 def get_ai_models():
     from ollama import Client
 
