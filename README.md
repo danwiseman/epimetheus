@@ -8,7 +8,7 @@
     <img height="32" width="32" src="https://cdn.simpleicons.org/ollama" />
 </p>
 
-[Epimetheus Avatar](static/assets/images/epimetheus-avatar.jpg)
+![Epimetheus Avatar](static/assets/images/epimetheus-avatar.jpg)
 
 ## Overview
 ------------
