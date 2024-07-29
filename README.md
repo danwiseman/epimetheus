@@ -1,5 +1,5 @@
 # Epimetheus
-===============
+------------
 
 <p align="center">
     <img height="32" width="32" src="https://cdn.simpleicons.org/slack" />
@@ -8,7 +8,7 @@
     <img height="32" width="32" src="https://cdn.simpleicons.org/ollama" />
 </p>
 
-![Epimetheus Avatar](static/assets/images/epimetheus-avatar.jpg)
+<img height="150" width="150" src="static/assets/images/epimetheus-avatar.jpg" />
 
 ## Overview
 ------------
