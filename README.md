@@ -18,7 +18,7 @@ call a code based model.
 
 The default model can be chosen in the configuration page.
 
-![slack screenshot](static/assets/images/slack-screen-shot.png)
+<img height="464" width="500" src="static/assets/images/slack-screen-shot.jpg" />
 
 ## Why Another Slack Bot?
 
