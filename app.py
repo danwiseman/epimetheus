@@ -9,7 +9,6 @@ import io
 import redis
 import os
 import threading
-import json
 
 
 from PIL import Image, ImageColor
@@ -20,7 +19,8 @@ from flask_bootstrap import Bootstrap5
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
-from ai.ai_client import PROMPT_MODELS, AIClient
+from ai.ai_client import AIClient
+from config import get_user_config, set_user_config, group_emoji_models
 
 from slack_extension.chat import send_gpt_response, Event
 
@@ -36,7 +36,7 @@ redis_url = f"redis://{redis_host}:{redis_port}"
 r = redis.Redis(host=redis_host, port=redis_port, db=0)
 
 ai_client = AIClient(
-    prompt_model=PROMPT_MODELS["CHAT"],
+    prompt_model="llama3:latest",
     api_base_url=ollama_base_url,
     redis_url=redis_url,
 )
@@ -52,49 +52,6 @@ system_prompt = "TODO: Add system prompt here"
 @flask_app.context_processor
 def inject_dynamic_data():
     return dict(sidebar_chats={}, models=get_ai_models())
-
-
-def get_user_config(user_id):
-    # Retrieve the user's configuration from Redis using a prefix
-    config = r.hgetall("users:{}".format(user_id))
-
-    if not config:
-        return {
-            "ollamaUrl": ollama_base_url,
-            "redisUrl": redis_url,
-            "qdrandUrl": "not implemented",
-            "modelForDefault": "llama3.1:latest",
-            "defaultModelPrompt": "",
-        }
-
-    # Convert byte strings to regular strings and decode JSON values
-    user_config = {k.decode(): json.loads(v.decode()) for k, v in config.items()}
-    return user_config
-
-
-def set_user_config(user_id, config):
-    # Store the user's configuration in Redis using a prefix
-    r.hmset("users:{}".format(user_id), {k: json.dumps(v) for k, v in config.items()})
-
-
-def group_emoji_models(config):
-    data = config
-    new_data = {}
-    emojiModels = []
-
-    for key, value in data.items():
-        if "-" in key and key.split("-")[-1].isdigit():
-            base_key = key.rsplit("-", 1)[0]
-            index = int(key.rsplit("-", 1)[1])
-            while len(emojiModels) <= index:
-                emojiModels.append({})
-            emojiModels[index][base_key] = value
-        else:
-            new_data[key] = value
-
-    new_data["emojiModels"] = emojiModels
-
-    return new_data
 
 
 def get_ai_models():

@@ -4,19 +4,15 @@ import pathlib
 from slack_bolt import App
 import re
 
+from config import get_user_config
 from slack_extension.ai import (
     get_valid_messages,
 )
 
-from ai.ai_client import PROMPT_MODELS, AIClient
+from ai.ai_client import AIClient
+
 
 app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
-
-emoji_to_model = {
-    "camera": PROMPT_MODELS["IMAGE"],
-    "avocado": PROMPT_MODELS["CODE"],
-    "pizza": PROMPT_MODELS["CHAT"],
-}
 
 
 class Event:
@@ -62,7 +58,7 @@ def send_gpt_response(event: Event, say):
         if not ai_response:
             raise Exception("No response")
 
-        if model == PROMPT_MODELS["IMAGE"]:
+        if model == "imageModel":
             stream, filename = url_to_read_stream(ai_response.content)
             app.client.files_upload_v2(
                 file=stream, filename=filename, thread_ts=ts, channel_id=channel
@@ -82,17 +78,22 @@ def send_gpt_response(event: Event, say):
 def get_prompt_models_from_slack_emoji(message_text: str):
     regex = r":(\w+):"
     matches = re.search(regex, message_text)
-    if matches and matches[1]:
-        emoji = matches[1]
-        selected_model = emoji_to_model[emoji]
-        if selected_model:
-            return selected_model
+    config = get_user_config(1)
+    if matches and matches[1] and config["emojiModels"]:
+        emoji = matches[1].replace(":", "")
+        selected_model = find_model(data=config["emojiModels"], emoji=emoji)
+        if len(selected_model) > 0:
+            return selected_model[0]
         else:
             print(f"{emoji} did not match a model")
-            return PROMPT_MODELS["CHAT"]
+            return config["modelForDefault"]
 
     print("No emoji matched a model")
-    return PROMPT_MODELS["CHAT"]
+    return config["modelForDefault"]
+
+
+def find_model(data, emoji):
+    return [item["modelForEmoji"] for item in data if item["emojiText"] == emoji]
 
 
 def url_to_read_stream(url: str):

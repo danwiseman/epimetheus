@@ -2,18 +2,11 @@ from langchain_community.chat_models import ChatOllama
 from langchain_community.chat_message_histories import RedisChatMessageHistory
 from langchain_core.messages import BaseMessage
 
-# Define prompt models for easy access
-PROMPT_MODELS = {
-    "CHAT": "llama3",
-    "CODE": "deepseek-coder-v2:latest",
-    "IMAGE": "stable",
-}
-
 
 class AIClient:
     def __init__(
         self,
-        prompt_model=PROMPT_MODELS["CHAT"],
+        prompt_model="llama3:latest",
         api_base_url="http://localhost:11434",
         chat_session=None,
         system_prompt=None,
@@ -41,10 +34,21 @@ class AIClient:
         else:
             raise ValueError("Name must be a string.")
 
+    @property
+    def prompt_model(self):
+        return self._prompt_model
+
+    @prompt_model.setter
+    def prompt_model(self, prompt_model):
+        if isinstance(prompt_model, str):
+            self._prompt_model = prompt_model
+        else:
+            raise ValueError("Model must be a string")
+
     def get_response(self, prompts):
         response = None
 
-        if self._prompt_model == PROMPT_MODELS["IMAGE"]:
+        if self._prompt_model == "imageModel":
             # For image generation (example placeholder for DallEAPIWrapper)
             pass  # Implement actual logic here if needed
         else:
