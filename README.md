@@ -18,6 +18,8 @@ call a code based model.
 
 The default model can be chosen in the configuration page.
 
+![slack screenshot](static/assets/images/slack-screen-shot.png)
+
 ## Why Another Slack Bot?
 
 The point of this Slack Bot is to keep the AI interaction within the organization and
