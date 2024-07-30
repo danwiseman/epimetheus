@@ -5,7 +5,7 @@ from slack_bolt import App
 import re
 
 from config import get_user_config
-from slack_extension.ai import get_valid_messages, set_system_prompt
+from slack_extension.ai import get_valid_messages
 
 from ai.ai_client import AIClient
 
@@ -43,9 +43,7 @@ def send_gpt_response(event: Event, say):
 
         print(f"received '{response['messages'][0]['text']}'")
 
-        prompts = get_valid_messages(response["messages"])
-        if system_prompt:
-            prompts = set_system_prompt(system_prompt, prompts)
+        prompts = get_valid_messages(response["messages"], system_prompt)
 
         slack_ai_client = AIClient(
             prompt_model=model, api_base_url=os.environ.get("OLLAMA_BASE_URL")
