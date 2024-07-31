@@ -1,6 +1,25 @@
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
-from slack_extension.ai import is_bot, is_mentioned, is_system, set_message
+from slack_extension.ai import (
+    get_valid_messages,
+    is_bot,
+    is_mentioned,
+    is_system,
+    set_message,
+)
+
+ai_message = {"bot_id": "an_id", "type": "assistant", "text": "I'm an AI message"}
+system_prompt = "I'm a system message"
+user_message = {"type": "user", "text": "<@BOTID> This is a user question"}
+messages = [user_message, ai_message, user_message]
+
+
+def test_get_valid_messages():
+    assert len(get_valid_messages(messages, None)) == 3
+    assert len(get_valid_messages(messages, system_prompt=system_prompt)) == 4
+    assert isinstance(
+        get_valid_messages(messages, system_prompt=system_prompt)[0], SystemMessage
+    )
 
 
 def test_is_bot():
