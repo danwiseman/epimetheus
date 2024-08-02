@@ -25,6 +25,10 @@ def post_image_message():
 
 
 def send_gpt_response(event: Event, say):
+    from slackstyler import SlackStyler
+
+    styler = SlackStyler()
+
     channel = event.channel
     ts = event.ts
     thread_ts = event.thread_ts if event.thread_ts else ts
@@ -59,7 +63,11 @@ def send_gpt_response(event: Event, say):
                 file=stream, filename=filename, thread_ts=ts, channel_id=channel
             )
         else:
-            say(channel=channel, text=str(ai_response.content), thread_ts=ts)
+            say(
+                channel=channel,
+                text=str(styler.convert(ai_response.content)),
+                thread_ts=ts,
+            )
             app.client.reactions_add(channel=channel, name="rocket", timestamp=ts)
 
     except Exception as e:
