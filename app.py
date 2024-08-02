@@ -22,7 +22,7 @@ from slack_bolt.adapter.socket_mode import SocketModeHandler
 from ai.ai_client import AIClient
 from config import get_user_config, set_user_config, group_emoji_models
 
-from slack_extension.chat import send_gpt_response, Event
+from slack_extension.chat import send_gpt_response, Event, send_gpt_reaction
 
 
 flask_app = Flask(__name__)
@@ -104,6 +104,22 @@ def handle_message(body, say):
         thread_ts=body["event"].get("thread_ts"),
     )
     send_gpt_response(event, say)
+
+
+@slack_app.event("reaction_added")
+def handle_message_reactions(body, say):
+    event = Event(
+        channel=body["event"]["item"]["channel"],
+        ts=body["event"]["item"]["ts"],
+        thread_ts=body["event"].get("thread_ts"),
+    )
+    reaction_text = body["event"]["reaction"]
+    reaction_user = body["event"]["user"]
+    send_gpt_reaction(
+        event,
+        reaction={"reaction": reaction_text, "reaction_user": reaction_user},
+        say=say,
+    )
 
 
 def runFlask():

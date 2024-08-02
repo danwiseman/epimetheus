@@ -7,6 +7,8 @@ import re
 from config import get_user_config
 from slack_extension.ai import get_valid_messages
 
+from langchain_core.messages import AIMessage
+
 from ai.ai_client import AIClient
 
 
@@ -24,7 +26,7 @@ def post_image_message():
     pass
 
 
-def send_gpt_response(event: Event, say):
+def send_gpt_response(event: Event, say, regenerate_response=False):
     from slackstyler import SlackStyler
 
     styler = SlackStyler()
@@ -39,7 +41,10 @@ def send_gpt_response(event: Event, say):
             raise Exception("No messages found in thread")
 
         # React to provide feedback to the user
-        app.client.reactions_add(channel=channel, name="thinking_face", timestamp=ts)
+        reaction = "thinking_face"
+        if regenerate_response:
+            reaction = "eyes"
+        app.client.reactions_add(channel=channel, name=reaction, timestamp=ts)
 
         model, system_prompt = get_prompt_models_from_slack_emoji(
             response["messages"][0]["text"].replace("<@.*?>", "")
@@ -48,6 +53,10 @@ def send_gpt_response(event: Event, say):
         print(f"received '{response['messages'][0]['text']}'")
 
         prompts = get_valid_messages(response["messages"], system_prompt)
+
+        # remove last AI Message
+        if regenerate_response and isinstance(prompts[-1], AIMessage):
+            prompts.pop()
 
         slack_ai_client = AIClient(
             prompt_model=model, api_base_url=os.environ.get("OLLAMA_BASE_URL")
@@ -76,6 +85,10 @@ def send_gpt_response(event: Event, say):
             text=f"<@{os.environ.get('SLACK_ADMIN_MEMBER_ID')}> Error: {str(e)}",
             thread_ts=ts,
         )
+
+
+def send_gpt_reaction(event: Event, reaction: dict, say):
+    pass
 
 
 def get_prompt_models_from_slack_emoji(message_text: str):
