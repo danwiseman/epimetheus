@@ -22,7 +22,12 @@ from slack_bolt.adapter.socket_mode import SocketModeHandler
 from ai.ai_client import AIClient
 from config import get_user_config, set_user_config, group_emoji_models
 
-from slack_extension.chat import send_gpt_response, Event, send_reaction_response
+from slack_extension.chat import (
+    send_gpt_response,
+    Event,
+    send_gpt_regeneration,
+    send_reaction_response,
+)
 
 
 flask_app = Flask(__name__)
@@ -125,6 +130,19 @@ def handle_message_reactions(body, say):
         },
         say=say,
     )
+
+
+@slack_app.action("regenerate_response")
+def handle_regenerate_response(ack, body, say, logger):
+    ack()
+    logger.info(body)
+    event = Event(
+        channel=body["container"]["channel_id"],
+        ts=body["container"]["message_ts"],
+        thread_ts=body["container"].get("thread_ts"),
+    )
+    send_gpt_regeneration(event, say)
+    # say(f"ok, I will regnerate ```{body}```")
 
 
 def runFlask():
