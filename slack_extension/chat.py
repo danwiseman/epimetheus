@@ -44,6 +44,7 @@ def send_gpt_response(event: Event, say, regenerate_response=False):
         reaction = "thinking_face"
         if regenerate_response:
             reaction = "eyes"
+            app.client.reactions_remove(channel=channel, name="rocket", timestamp=ts)
         app.client.reactions_add(channel=channel, name=reaction, timestamp=ts)
 
         model, system_prompt = get_prompt_models_from_slack_emoji(
@@ -87,8 +88,62 @@ def send_gpt_response(event: Event, say, regenerate_response=False):
         )
 
 
+def send_reaction_response(event: Event, reaction: dict, say):
+    reaction_emoji = reaction["emoji"]
+    reaction_user = reaction["user"]
+    reaction_to_user = reaction["to_user"]
+
+    user_info = get_user_info(reaction_to_user)
+
+    blocks = [
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": f"<@{reaction_user}>, I'm sorry this message wasn't what you were looking for :face_with_peeking_eye:. Would you like me to try again? ```{user_info}```",
+            },
+        },
+        {"type": "divider"},
+        {
+            "type": "actions",
+            "elements": [
+                {
+                    "type": "button",
+                    "text": {
+                        "type": "plain_text",
+                        "text": ":melting_face: Regenerate Response",
+                        "emoji": True,
+                    },
+                    "value": "click_me_123",
+                    "action_id": "actionId-0",
+                }
+            ],
+        },
+    ]
+
+    # TODO: fix the hard coding of the bot name and the emoji
+    if reaction_emoji == "hankey" and user_info["real_name"] == "epimetheus":
+        say(
+            channel=event.channel,
+            blocks=blocks,
+            thread_ts=event.ts,
+        )
+
+
 def send_gpt_reaction(event: Event, reaction: dict, say):
-    pass
+    reaction_emoji = reaction["reaction_text"]
+    say(
+        channel=event.channel,
+        text=f"testing: you responsed with {reaction_emoji}",
+        thread_ts=event.ts,
+    )
+
+    if reaction["reaction_text"] and reaction["reaction_text"] == "hankey":
+        say(
+            channel=event.channel,
+            text="Would you like to revise my response?",
+            thread_ts=event.ts,
+        )
 
 
 def get_prompt_models_from_slack_emoji(message_text: str):
@@ -129,6 +184,10 @@ def url_to_read_stream(url: str):
     response = requests.get(url, stream=True)
     filename = pathlib.Path(url).name
     return (response.raw, filename)
+
+
+def get_user_info(user_id):
+    return app.client.users_info(user=user_id).get("user")
 
 
 if __name__ == "__main__":
