@@ -7,6 +7,8 @@ import re
 from config import get_user_config
 from slack_extension.ai import get_valid_messages
 
+from langchain_core.messages import AIMessage
+
 from ai.ai_client import AIClient
 
 
@@ -24,7 +26,7 @@ def post_image_message():
     pass
 
 
-def send_gpt_response(event: Event, say):
+def send_gpt_response(event: Event, say, regenerate_response=False):
     from slackstyler import SlackStyler
 
     styler = SlackStyler()
@@ -39,7 +41,11 @@ def send_gpt_response(event: Event, say):
             raise Exception("No messages found in thread")
 
         # React to provide feedback to the user
-        app.client.reactions_add(channel=channel, name="thinking_face", timestamp=ts)
+        reaction = "thinking_face"
+        if regenerate_response:
+            reaction = "eyes"
+            # app.client.reactions_remove(channel=channel, name="rocket", timestamp=ts)
+        app.client.reactions_add(channel=channel, name=reaction, timestamp=ts)
 
         model, system_prompt = get_prompt_models_from_slack_emoji(
             response["messages"][0]["text"].replace("<@.*?>", "")
@@ -48,6 +54,10 @@ def send_gpt_response(event: Event, say):
         print(f"received '{response['messages'][0]['text']}'")
 
         prompts = get_valid_messages(response["messages"], system_prompt)
+
+        # remove last AI Message
+        if regenerate_response and isinstance(prompts[-1], AIMessage):
+            prompts.pop()
 
         slack_ai_client = AIClient(
             prompt_model=model, api_base_url=os.environ.get("OLLAMA_BASE_URL")
@@ -76,6 +86,57 @@ def send_gpt_response(event: Event, say):
             text=f"<@{os.environ.get('SLACK_ADMIN_MEMBER_ID')}> Error: {str(e)}",
             thread_ts=ts,
         )
+
+
+def send_reaction_response(event: Event, reaction: dict, say):
+    reaction_emoji = reaction["emoji"]
+    reaction_user = reaction["user"]
+    reaction_to_user = reaction["to_user"]
+
+    user_info = get_user_info(reaction_to_user)
+
+    blocks = [
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": f"<@{reaction_user}>, I'm sorry this message wasn't what you were looking for :face_with_peeking_eye:. Would you like me to try again?",
+            },
+        },
+        {"type": "divider"},
+        {
+            "type": "actions",
+            "elements": [
+                {
+                    "type": "button",
+                    "text": {
+                        "type": "plain_text",
+                        "text": ":melting_face: Regenerate Response",
+                        "emoji": True,
+                    },
+                    "value": f"{event.ts}",
+                    "action_id": "regenerate_response",
+                }
+            ],
+        },
+    ]
+
+    # TODO: fix the hard coding of the bot name and the emoji
+    if (
+        reaction_emoji == "hankey"
+        and user_info
+        and user_info["real_name"] == "epimetheus"
+    ):
+        say(
+            channel=event.channel,
+            blocks=blocks,
+            text=f"<@{reaction_user}>, I'm sorry this message wasn't what you were looking for :face_with_peeking_eye:. Would you like me to try again?",
+            thread_ts=event.ts,
+        )
+
+
+def send_gpt_regeneration(event: Event, say):
+    send_gpt_response(event=event, say=say, regenerate_response=True)
 
 
 def get_prompt_models_from_slack_emoji(message_text: str):
@@ -116,6 +177,10 @@ def url_to_read_stream(url: str):
     response = requests.get(url, stream=True)
     filename = pathlib.Path(url).name
     return (response.raw, filename)
+
+
+def get_user_info(user_id):
+    return app.client.users_info(user=user_id).get("user")
 
 
 if __name__ == "__main__":

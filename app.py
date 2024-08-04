@@ -22,7 +22,12 @@ from slack_bolt.adapter.socket_mode import SocketModeHandler
 from ai.ai_client import AIClient
 from config import get_user_config, set_user_config, group_emoji_models
 
-from slack_extension.chat import send_gpt_response, Event
+from slack_extension.chat import (
+    send_gpt_response,
+    Event,
+    send_gpt_regeneration,
+    send_reaction_response,
+)
 
 
 flask_app = Flask(__name__)
@@ -104,6 +109,40 @@ def handle_message(body, say):
         thread_ts=body["event"].get("thread_ts"),
     )
     send_gpt_response(event, say)
+
+
+@slack_app.event("reaction_added")
+def handle_message_reactions(body, say):
+    body_event = body["event"]
+    event = Event(
+        channel=body_event["item"]["channel"],
+        ts=body_event["item"]["ts"],
+    )
+    reaction_emoji = body_event["reaction"]
+    reaction_user = body_event["user"]
+    reaction_to_user = body_event["item_user"]
+    send_reaction_response(
+        event,
+        reaction={
+            "emoji": reaction_emoji,
+            "user": reaction_user,
+            "to_user": reaction_to_user,
+        },
+        say=say,
+    )
+
+
+@slack_app.action("regenerate_response")
+def handle_regenerate_response(ack, body, say, logger):
+    ack()
+    logger.info(body)
+    event = Event(
+        channel=body["container"]["channel_id"],
+        ts=body["container"]["message_ts"],
+        thread_ts=body["container"].get("thread_ts"),
+    )
+    send_gpt_regeneration(event, say)
+    # say(f"ok, I will regnerate ```{body}```")
 
 
 def runFlask():
