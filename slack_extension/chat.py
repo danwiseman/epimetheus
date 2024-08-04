@@ -58,6 +58,7 @@ def send_gpt_response(event: Event, say, regenerate_response=False):
         # remove last AI Message
         if regenerate_response and isinstance(prompts[-1], AIMessage):
             prompts.pop()
+            prompts.pop()
 
         slack_ai_client = AIClient(
             prompt_model=model, api_base_url=os.environ.get("OLLAMA_BASE_URL")
