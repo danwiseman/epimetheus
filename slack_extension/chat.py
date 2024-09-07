@@ -63,7 +63,7 @@ def send_gpt_response(event: Event, say, regenerate_response=False):
         slack_ai_client = AIClient(
             prompt_model=model, api_base_url=os.environ.get("OLLAMA_BASE_URL")
         )
-        ai_response = slack_ai_client.get_response(prompts)
+        ai_response = slack_ai_client.get_response_with_tools(prompts)
 
         if not ai_response:
             raise Exception("No response")

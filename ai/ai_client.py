@@ -1,6 +1,9 @@
-from langchain_community.chat_models import ChatOllama
+from langchain_ollama import ChatOllama
 from langchain_community.chat_message_histories import RedisChatMessageHistory
 from langchain_core.messages import BaseMessage
+from langchain_core.prompts import ChatPromptTemplate
+
+from langchain_community.tools.tavily_search.tool import TavilySearchResults
 
 
 class AIClient:
@@ -55,6 +58,30 @@ class AIClient:
             response = self._client.invoke(prompts)
 
         return response
+
+    def get_response_with_tools(self, prompts):
+        tavily_tool = TavilySearchResults(
+            max_results=5,
+            search_depth="advanced",
+            include_answer=True,
+            include_raw_content=True,
+            include_images=True,
+        )
+        llm_with_tools = self._client.bind_tools([tavily_tool])
+
+        prompt = ChatPromptTemplate(
+            [
+                *prompts,
+                ("placeholder", "{messages}"),
+            ]
+        )
+
+        llm_chain = prompt | llm_with_tools
+
+        input_ = {"user_input": prompts[-1].content}
+        ai_msg = llm_chain.invoke(input_)
+        tool_msgs = tavily_tool.batch(ai_msg.tool_calls)
+        return llm_chain.invoke({**input_, "messages": [ai_msg, *tool_msgs]})
 
     def get_message_history(self):
         return RedisChatMessageHistory(
