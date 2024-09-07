@@ -27,6 +27,8 @@ spec:
     - env:
         - name: OLLAMA_BASE_URL
           value: http://ollama.ai.local
+        - name: PYTHONUNBUFFERED
+          value: 1
         - name: SLACK_BOT_TOKEN
           valueFrom:
             secretKeyRef:
@@ -42,6 +44,11 @@ spec:
             secretKeyRef:
               name: slack-app
               key: slack-signing-secret
+        - name: TAVILY_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: slack-app
+              key: tavily-api-key
       image: localhost/epimetheus-test
       name: epimetheus-app
       securityContext:
